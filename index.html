@@ -26,32 +26,34 @@
             transition: background-color 0.3s;
         }
 
+        /* Compact Top Banner for Shorts */
         #top-feed {
             position: absolute;
-            top: 20px;
-            font-size: 26px;
+            top: 15px;
+            font-size: 20px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: rgba(13, 27, 42, 0.9);
-            padding: 10px 28px;
-            border-radius: 30px;
+            padding: 6px 20px;
+            border-radius: 25px;
             border: 2px solid #00f3ff;
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
             z-index: 10;
         }
         #top-feed img {
-            width: 32px;
-            height: 22px;
-            border-radius: 4px;
+            width: 28px;
+            height: 18px;
+            border-radius: 3px;
             object-fit: cover;
         }
 
+        /* Compact Circle Container for Shorts */
         #game-container {
             position: relative;
-            width: 600px;
-            height: 600px;
+            width: 480px;
+            height: 480px;
         }
         canvas {
             display: block;
@@ -63,8 +65,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 260px;
-            height: 260px;
+            width: 200px;
+            height: 200px;
             object-fit: contain;
             pointer-events: none;
             opacity: 0.5;
@@ -81,13 +83,13 @@
             z-index: 100;
         }
         .ctrl-btn {
-            padding: 10px 18px;
+            padding: 8px 16px;
             background: #00f3ff;
             color: #0b0f19;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
             box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
         }
@@ -296,7 +298,6 @@
     </div>
 
     <script>
-        // List of 150 Unique World Countries
         const allWorldCountries = [
             { name: "Bangladesh", code: "bd" }, { name: "Argentina", code: "ar" }, { name: "Brazil", code: "br" }, { name: "Germany", code: "de" }, { name: "Portugal", code: "pt" },
             { name: "France", code: "fr" }, { name: "Spain", code: "es" }, { name: "England", code: "gb-eng" }, { name: "Japan", code: "jp" }, { name: "USA", code: "us" },
@@ -342,14 +343,14 @@
         const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
         const container = document.getElementById('game-container');
-        const width = 600;
-        const height = 600;
+        const width = 480;
+        const height = 480;
         const centerX = width / 2;
         const centerY = height / 2;
-        const circleRadius = 250;
+        const circleRadius = 200; // Adjusted for compact shorts size
 
         const engine = Engine.create();
-        engine.world.gravity.y = 0.65; // Dynamic Gravity
+        engine.world.gravity.y = 0.15; // LOW GRAVITY -> Floating Bubble Effect!
 
         const render = Render.create({
             element: container,
@@ -380,7 +381,7 @@
             boundarySegments.forEach(b => Composite.remove(engine.world, b));
             boundarySegments = [];
 
-            const totalSegs = 90;
+            const totalSegs = 80;
             const anglePerSeg = (Math.PI * 2) / totalSegs;
             const gapRad = (gapSizeDegrees * Math.PI) / 180;
             const halfGap = gapRad / 2;
@@ -391,13 +392,13 @@
                 let diff = segAngle % (Math.PI * 2);
                 if (diff > Math.PI) diff -= Math.PI * 2;
 
-                if (Math.abs(diff) < halfGap) continue; // Gap for falling flags
+                if (Math.abs(diff) < halfGap) continue;
 
                 const worldAngle = segAngle + arenaAngle;
                 const x = centerX + Math.cos(worldAngle) * circleRadius;
                 const y = centerY + Math.sin(worldAngle) * circleRadius;
 
-                const wall = Bodies.rectangle(x, y, 22, 18, {
+                const wall = Bodies.rectangle(x, y, 20, 16, {
                     isStatic: true,
                     angle: worldAngle + Math.PI / 2,
                     restitution: 1.0,
@@ -423,29 +424,29 @@
             activeFlagBodies = [];
             isGameOver = false;
 
-            // Strict Unique Selection Filter
             const uniqueList = shuffleArray(allWorldCountries).slice(0, Math.min(count, allWorldCountries.length));
 
             for (let i = 0; i < uniqueList.length; i++) {
                 const country = uniqueList[i];
-                const offsetX = centerX + (Math.random() - 0.5) * 140;
-                const offsetY = centerY + (Math.random() - 0.5) * 100;
+                const offsetX = centerX + (Math.random() - 0.5) * 80;
+                const offsetY = centerY + (Math.random() - 0.5) * 80;
 
-                const ballRadius = count > 100 ? 11 : (count > 50 ? 13 : 16);
+                const ballRadius = count > 100 ? 10 : (count > 50 ? 12 : 15);
 
                 const body = Bodies.circle(offsetX, offsetY, ballRadius, {
-                    restitution: 0.98, // High Bounciness
-                    friction: 0.0001,
-                    frictionAir: 0.0001,
-                    density: 0.005,
+                    restitution: 0.98, // High Bouncy Bubble Collisions
+                    friction: 0.0,
+                    frictionAir: 0.002, // Floating resistance
+                    density: 0.001,
                     countryData: country,
                     radiusVal: ballRadius,
                     render: { fillStyle: '#ffffff' }
                 });
 
+                // Continuous random float force for bubble agitation
                 Body.setVelocity(body, {
-                    x: (Math.random() - 0.5) * 6,
-                    y: (Math.random() - 0.5) * 6
+                    x: (Math.random() - 0.5) * 8,
+                    y: (Math.random() - 0.5) * 8
                 });
 
                 activeFlagBodies.push(body);
@@ -455,11 +456,11 @@
 
         spawnFlags(totalFlagsToSpawn);
 
-        // Custom Render Loop with Gap Angle
+        // Custom Render Loop for Rotating Neon Ring & Floating Bubbles
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
 
-            // Draw Rotating Neon Circle WITH GAP
+            // Draw Rotating Neon Circle with Gap
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(arenaAngle);
@@ -471,14 +472,14 @@
             ctx.beginPath();
             ctx.arc(0, 0, circleRadius, startAngle, endAngle);
             ctx.strokeStyle = '#00f3ff';
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 7;
             ctx.lineCap = 'round';
             ctx.shadowColor = '#00f3ff';
             ctx.shadowBlur = 25;
             ctx.stroke();
             ctx.restore();
 
-            // Draw Flag Images
+            // Draw Flags as Floating Bubbles
             activeFlagBodies.forEach(b => {
                 const pos = b.position;
                 const r = b.radiusVal;
@@ -513,11 +514,19 @@
             arenaAngle += gapRotationSpeed;
             buildArena();
 
+            // Apply slight random floating impulses to simulate bubble agitation
+            activeFlagBodies.forEach(b => {
+                Body.applyForce(b, b.position, {
+                    x: (Math.random() - 0.5) * 0.0004,
+                    y: (Math.random() - 0.5) * 0.0004
+                });
+            });
+
             for (let i = activeFlagBodies.length - 1; i >= 0; i--) {
                 const b = activeFlagBodies[i];
                 const dist = Math.hypot(b.position.x - centerX, b.position.y - centerY);
 
-                if (dist > circleRadius + 30) {
+                if (dist > circleRadius + 25) {
                     const cData = b.countryData;
                     updateTopFeed(cData);
 
@@ -530,6 +539,7 @@
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
 
+                        // AUTO-LOOP: Restart next round automatically after 4.5 seconds
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
                         }, 4500);
