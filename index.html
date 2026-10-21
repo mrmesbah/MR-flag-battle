@@ -26,7 +26,6 @@
             transition: background-color 0.3s;
         }
 
-        /* Top Banner placed exactly at the red box position */
         #top-feed {
             position: absolute;
             top: 65px;
@@ -49,7 +48,6 @@
             object-fit: cover;
         }
 
-        /* YouTube Shorts Vertical Layout (9:16 Aspect Ratio Container) */
         #game-container {
             position: relative;
             width: 400px;
@@ -77,7 +75,6 @@
             z-index: 1;
         }
 
-        /* Control Panel placed exactly at the lower red box positions */
         #control-panel {
             position: absolute;
             bottom: 45px;
@@ -344,6 +341,36 @@
             loadedFlagImages[c.code] = img;
         });
 
+        // Web Audio API for Collision Sounds
+        let audioCtx = null;
+        function playCollisionSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                // Randomize pitch slightly for natural bouncing effect
+                osc.frequency.setValueAtTime(150 + Math.random() * 200, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {
+                // Audio context policy handler
+            }
+        }
+
         const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
         const container = document.getElementById('game-container');
@@ -458,6 +485,20 @@
         }
 
         spawnFlags(totalFlagsToSpawn);
+
+        // Detect Collisions for Sound Effects
+        Events.on(engine, 'collisionStart', (event) => {
+            if (!isPlaying || isGameOver) return;
+            let pairs = event.pairs;
+            for (let i = 0; i < pairs.length; i++) {
+                let p = pairs[i];
+                // Play sound if flag hits flag or wall
+                if (p.bodyA.countryData || p.bodyB.countryData) {
+                    playCollisionSound();
+                    break; // Play one sound per frame batch to prevent audio overlapping distortion
+                }
+            }
+        });
 
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
