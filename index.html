@@ -28,7 +28,7 @@
 
         #top-feed {
             position: absolute;
-            top: 65px;
+            top: 40px;
             font-size: 18px;
             font-weight: 700;
             display: flex;
@@ -46,6 +46,55 @@
             height: 16px;
             border-radius: 3px;
             object-fit: cover;
+        }
+
+        /* NEW: Leaderboard Bar in the Marked Rectangle */
+        #leaderboard-bar {
+            position: absolute;
+            top: 90px;
+            width: 380px;
+            height: 48px;
+            background: rgba(13, 27, 42, 0.85);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            scrollbar-width: thin;
+            scrollbar-color: #00f3ff transparent;
+        }
+        #leaderboard-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+        #leaderboard-bar::-webkit-scrollbar-thumb {
+            background: #00f3ff;
+            border-radius: 4px;
+        }
+        .leader-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .leader-item img {
+            width: 20px;
+            height: 13px;
+            border-radius: 2px;
+            object-fit: cover;
+        }
+        .leader-wins {
+            color: #00f3ff;
+            font-size: 13px;
         }
 
         #game-container {
@@ -219,6 +268,11 @@
         <span id="feed-text">Country Flag Battle</span>
     </div>
 
+    <!-- Leaderboard Container -->
+    <div id="leaderboard-bar">
+        <span style="font-size: 12px; color: #888;">Wins:</span>
+    </div>
+
     <div id="game-container">
         <img id="custom-logo" src="" alt="Logo">
         <div id="control-panel">
@@ -332,6 +386,31 @@
             { name: "UAE", code: "ae" }, { name: "Uzbekistan", code: "uz" }, { name: "Venezuela", code: "ve" }, { name: "Vietnam", code: "vn" }, { name: "Yemen", code: "ye" },
             { name: "Zambia", code: "zm" }, { name: "Zimbabwe", code: "zw" }
         ];
+
+        // Wins Data Tracking
+        const winScores = {};
+
+        function addWinAndRenderLeaderboard(country) {
+            winScores[country.code] = (winScores[country.code] || { name: country.name, wins: 0, code: country.code });
+            winScores[country.code].wins += 1;
+
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const bar = document.getElementById('leaderboard-bar');
+            const sortedList = Object.values(winScores).sort((a, b) => b.wins - a.wins);
+
+            if (sortedList.length === 0) return;
+
+            bar.innerHTML = '';
+            sortedList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'leader-item';
+                div.innerHTML = `<img src="https://flagcdn.com/w80/${item.code}.png"> ${item.name} <span class="leader-wins">${item.wins}</span>`;
+                bar.appendChild(div);
+            });
+        }
 
         const loadedFlagImages = {};
         allWorldCountries.forEach(c => {
@@ -576,6 +655,9 @@
                         const winner = activeFlagBodies[0].countryData;
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
+
+                        // Track Wins in Leaderboard
+                        addWinAndRenderLeaderboard(winner);
 
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
