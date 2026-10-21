@@ -28,7 +28,7 @@
 
         #top-feed {
             position: absolute;
-            top: 40px;
+            top: 45px;
             font-size: 18px;
             font-weight: 700;
             display: flex;
@@ -48,26 +48,25 @@
             object-fit: cover;
         }
 
-        /* NEW: Leaderboard Bar in the Marked Rectangle */
+        /* Leaderboard Bar - Positions below Top Feed */
         #leaderboard-bar {
             position: absolute;
-            top: 90px;
-            width: 380px;
+            top: 95px;
+            width: 320px;
             height: 48px;
             background: rgba(13, 27, 42, 0.85);
-            border: 1px solid rgba(0, 243, 255, 0.4);
-            border-radius: 10px;
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
             padding: 4px 10px;
+            gap: 10px;
             overflow-x: auto;
             white-space: nowrap;
             z-index: 10;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-            scrollbar-width: thin;
-            scrollbar-color: #00f3ff transparent;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
+        /* Custom Scrollbar for Leaderboard */
         #leaderboard-bar::-webkit-scrollbar {
             height: 4px;
         }
@@ -75,26 +74,26 @@
             background: #00f3ff;
             border-radius: 4px;
         }
-        .leader-item {
-            display: inline-flex;
+        .leaderboard-item {
+            display: flex;
             align-items: center;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 3px 8px;
-            border-radius: 12px;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
         }
-        .leader-item img {
-            width: 20px;
-            height: 13px;
+        .leaderboard-item img {
+            width: 22px;
+            height: 14px;
             border-radius: 2px;
             object-fit: cover;
         }
-        .leader-wins {
+        .leaderboard-count {
             color: #00f3ff;
-            font-size: 13px;
         }
 
         #game-container {
@@ -269,9 +268,7 @@
     </div>
 
     <!-- Leaderboard Container -->
-    <div id="leaderboard-bar">
-        <span style="font-size: 12px; color: #888;">Wins:</span>
-    </div>
+    <div id="leaderboard-bar"></div>
 
     <div id="game-container">
         <img id="custom-logo" src="" alt="Logo">
@@ -387,29 +384,41 @@
             { name: "Zambia", code: "zm" }, { name: "Zimbabwe", code: "zw" }
         ];
 
-        // Wins Data Tracking
-        const winScores = {};
+        // Leaderboard Win Tracking System
+        let winScores = JSON.parse(localStorage.getItem('flag_win_scores') || '{}');
 
-        function addWinAndRenderLeaderboard(country) {
-            winScores[country.code] = (winScores[country.code] || { name: country.name, wins: 0, code: country.code });
-            winScores[country.code].wins += 1;
-
-            renderLeaderboard();
+        function recordWin(countryCode) {
+            winScores[countryCode] = (winScores[countryCode] || 0) + 1;
+            localStorage.setItem('flag_win_scores', JSON.stringify(winScores));
+            updateLeaderboardUI();
         }
 
-        function renderLeaderboard() {
-            const bar = document.getElementById('leaderboard-bar');
-            const sortedList = Object.values(winScores).sort((a, b) => b.wins - a.wins);
+        function updateLeaderboardUI() {
+            const container = document.getElementById('leaderboard-bar');
+            if (!container) return;
 
-            if (sortedList.length === 0) return;
+            const sorted = Object.keys(winScores)
+                .map(code => {
+                    const country = allWorldCountries.find(c => c.code === code);
+                    return {
+                        code: code,
+                        name: country ? country.name : code,
+                        wins: winScores[code]
+                    };
+                })
+                .sort((a, b) => b.wins - a.wins);
 
-            bar.innerHTML = '';
-            sortedList.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'leader-item';
-                div.innerHTML = `<img src="https://flagcdn.com/w80/${item.code}.png"> ${item.name} <span class="leader-wins">${item.wins}</span>`;
-                bar.appendChild(div);
-            });
+            if (sorted.length === 0) {
+                container.innerHTML = `<span style="font-size:12px; color:#888; width:100%; text-align:center;">No Wins Yet</span>`;
+                return;
+            }
+
+            container.innerHTML = sorted.map(item => `
+                <div class="leaderboard-item">
+                    <img src="https://flagcdn.com/w80/${item.code}.png" alt="${item.name}">
+                    <span class="leaderboard-count">${item.wins}</span>
+                </div>
+            `).join('');
         }
 
         const loadedFlagImages = {};
@@ -563,6 +572,7 @@
         }
 
         spawnFlags(totalFlagsToSpawn);
+        updateLeaderboardUI();
 
         // Active Collision Listener for Thuk-Thuk Sound
         Events.on(engine, 'collisionStart', (event) => {
@@ -655,9 +665,7 @@
                         const winner = activeFlagBodies[0].countryData;
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
-
-                        // Track Wins in Leaderboard
-                        addWinAndRenderLeaderboard(winner);
+                        recordWin(winner.code);
 
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
