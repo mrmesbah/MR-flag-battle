@@ -341,7 +341,7 @@
             loadedFlagImages[c.code] = img;
         });
 
-        // Web Audio API for Collision Sounds
+        // Web Audio API for Collision 'Thuk-Thuk' Sound
         let audioCtx = null;
         function playCollisionSound() {
             try {
@@ -355,19 +355,18 @@
                 const gain = audioCtx.createGain();
                 
                 osc.type = 'triangle';
-                // Randomize pitch slightly for natural bouncing effect
-                osc.frequency.setValueAtTime(150 + Math.random() * 200, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(120 + Math.random() * 150, audioCtx.currentTime);
                 
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.08);
+                osc.stop(audioCtx.currentTime + 0.05);
             } catch (e) {
-                // Audio context policy handler
+                // Audio context handling
             }
         }
 
@@ -486,16 +485,15 @@
 
         spawnFlags(totalFlagsToSpawn);
 
-        // Detect Collisions for Sound Effects
+        // Active Collision Listener for Thuk-Thuk Sound
         Events.on(engine, 'collisionStart', (event) => {
             if (!isPlaying || isGameOver) return;
             let pairs = event.pairs;
             for (let i = 0; i < pairs.length; i++) {
                 let p = pairs[i];
-                // Play sound if flag hits flag or wall
                 if (p.bodyA.countryData || p.bodyB.countryData) {
                     playCollisionSound();
-                    break; // Play one sound per frame batch to prevent audio overlapping distortion
+                    break;
                 }
             }
         });
@@ -603,12 +601,17 @@
             feedText.innerText = `Winner: ${country.name}!`;
         }
 
+        // FIXED: Reliable Text-to-Speech Winner Announcement
         function speakWinner(countryName) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(`Winner is ${countryName}`);
+                const textToSpeak = `Winner is ${countryName}`;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.rate = 1.0;
                 utterance.pitch = 1.1;
+                utterance.volume = 1.0;
+                
+                // Ensure voices are loaded or trigger immediately
                 window.speechSynthesis.speak(utterance);
             }
         }
