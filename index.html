@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Flag Battle Game</title>
-    <!-- Matter.js Physics Engine -->
+    <title>Country Flag Battle</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #0b0f19;
+            background-color: #050814;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -20,27 +19,27 @@
             overflow: hidden;
             flex-direction: column;
         }
+        #top-banner {
+            position: absolute;
+            top: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 10px 30px;
+            border-radius: 40px;
+            border: 2px solid #ff0055;
+            box-shadow: 0 0 20px #ff0055;
+            letter-spacing: 1px;
+            text-align: center;
+        }
         #game-container {
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.3);
             border-radius: 50%;
         }
         canvas {
             display: block;
             border-radius: 50%;
-        }
-        #top-banner {
-            position: absolute;
-            top: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 25px;
-            border-radius: 30px;
-            border: 2px solid #ff0055;
-            box-shadow: 0 0 15px #ff0055;
-            letter-spacing: 1px;
-            text-align: center;
         }
         #settings-btn {
             position: fixed;
@@ -49,56 +48,60 @@
             background: #00f3ff;
             color: #0b0f19;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            box-shadow: 0 0 10px #00f3ff;
+            box-shadow: 0 0 15px #00f3ff;
+            font-size: 16px;
         }
         #settings-panel {
             display: none;
             position: fixed;
-            bottom: 70px;
+            bottom: 80px;
             right: 20px;
             background: rgba(15, 23, 42, 0.95);
             border: 2px solid #00f3ff;
             padding: 20px;
-            border-radius: 12px;
-            width: 250px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            border-radius: 15px;
+            width: 260px;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
         }
         .setting-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .setting-group label {
             display: block;
             font-size: 14px;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             color: #00f3ff;
+            font-weight: 600;
         }
-        .setting-group select, .setting-group input {
+        .setting-group select {
             width: 100%;
-            padding: 6px;
+            padding: 8px;
             background: #1e293b;
             color: white;
             border: 1px solid #475569;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <div id="top-banner">Country Battle Arena</div>
+    <div id="top-banner">Country Flag Battle</div>
     <div id="game-container"></div>
 
     <button id="settings-btn" onclick="toggleSettings()">⚙️ Settings</button>
 
     <div id="settings-panel">
         <div class="setting-group">
-            <label>Rotation Speed</label>
+            <label>Gap Rotation Speed</label>
             <select id="speed-select" onchange="updateSettings()">
-                <option value="0.02">4x</option>
-                <option value="0.04" selected>8x</option>
+                <option value="0.01">2x</option>
+                <option value="0.02" selected>4x</option>
+                <option value="0.04">8x</option>
                 <option value="0.08">16x</option>
             </select>
         </div>
@@ -106,20 +109,21 @@
             <label>Number of Flags</label>
             <select id="flags-select" onchange="updateSettings()">
                 <option value="10">10 Flags</option>
-                <option value="20" selected>20 Flags</option>
-                <option value="30">30 Flags</option>
+                <option value="20">20 Flags</option>
+                <option value="30" selected>30 Flags</option>
+                <option value="50">50 Flags</option>
             </select>
         </div>
     </div>
 
     <script>
-        const { Engine, Render, Runner, Bodies, Composite, Constraint, Events } = Matter;
+        const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
 
-        const width = 600;
-        const height = 600;
+        const width = 650;
+        const height = 650;
 
         const engine = Engine.create();
-        engine.world.gravity.y = 0.5;
+        engine.world.gravity.y = 0.4;
 
         const render = Render.create({
             element: document.getElementById('game-container'),
@@ -128,7 +132,7 @@
                 width: width,
                 height: height,
                 wireframes: false,
-                background: '#0b0f19'
+                background: '#070b19'
             }
         });
 
@@ -136,33 +140,38 @@
         const runner = Runner.create();
         Runner.run(runner, engine);
 
-        // Arena Circle Boundary Parts with a Gap
-        const circleRadius = 250;
+        const circleRadius = 260;
         const centerX = width / 2;
         const centerY = height / 2;
-        const thickness = 20;
-        const segments = 20;
+        const segments = 40; // Smooth circle
         let boundaryBodies = [];
-        let rotatingAngle = 0;
-        let rotationSpeed = 0.04;
+        let rotationSpeed = 0.02;
+        let totalFlags = 30;
+        let flagBodies = [];
+
+        // Sample country emojis / colors representing flags for visual clarity
+        const flagColors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#9b59b6', '#ff6b81', '#3742fa', '#7bed9f', '#eccc68'];
 
         function createArena() {
+            // Remove old walls if any
+            boundaryBodies.forEach(wall => Composite.remove(engine.world, wall));
+            boundaryBodies = [];
+
             const angleStep = (Math.PI * 2) / segments;
-            // Leave 3 segments open for the gap
-            const gapStart = 5;
-            const gapEnd = 7;
+            const gapStart = 16; // Defines the gap position
+            const gapEnd = 20;   // Gap size
 
             for (let i = 0; i < segments; i++) {
-                if (i >= gapStart && i <= gapEnd) continue;
+                if (i >= gapStart && i <= gapEnd) continue; // Skip to create gap
 
                 const angle = i * angleStep;
                 const x = centerX + Math.cos(angle) * circleRadius;
                 const y = centerY + Math.sin(angle) * circleRadius;
 
-                const wall = Bodies.rectangle(x, y, 40, thickness, {
+                const wall = Bodies.rectangle(x, y, 45, 15, {
                     isStatic: true,
                     angle: angle + Math.PI / 2,
-                    render: { fillStyle: '#ff0055' }
+                    render: { fillStyle: '#00f3ff' }
                 });
                 boundaryBodies.push(wall);
             }
@@ -171,24 +180,18 @@
 
         createArena();
 
-        // Sample Country Flags/Balls Setup
-        let flagBodies = [];
-        let totalFlags = 20;
-        const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#9b59b6', '#00d2d3'];
-
         function spawnFlags(count) {
-            // Remove existing flags
             flagBodies.forEach(f => Composite.remove(engine.world, f));
             flagBodies = [];
 
             for (let i = 0; i < count; i++) {
-                const offsetX = centerX + (Math.random() - 0.5) * 100;
-                const offsetY = centerY + (Math.random() - 0.5) * 100;
-                const flag = Bodies.circle(offsetX, offsetY, 18, {
-                    restitution: 0.8,
-                    friction: 0.005,
+                const offsetX = centerX + (Math.random() - 0.5) * 120;
+                const offsetY = centerY + (Math.random() - 0.5) * 120;
+                const flag = Bodies.circle(offsetX, offsetY, 16, {
+                    restitution: 0.85,
+                    friction: 0.002,
                     render: {
-                        fillStyle: colors[i % colors.length]
+                        fillStyle: flagColors[i % flagColors.length]
                     }
                 });
                 flagBodies.push(flag);
@@ -198,24 +201,23 @@
 
         spawnFlags(totalFlags);
 
-        // Game Loop for Rotating Boundaries and Checking Winners
+        // Rotation and Elimination Check
+        let angleCounter = 0;
         Events.on(engine, 'beforeUpdate', () => {
-            rotatingAngle += rotationSpeed;
-            // You can add rotation logic or arena effects here
+            angleCounter += rotationSpeed;
             
-            // Check if flags fall out of the circle bounds
+            // Check flags falling out
             flagBodies.forEach((flag, index) => {
                 const dist = Math.hypot(flag.position.x - centerX, flag.position.y - centerY);
-                if (dist > circleRadius + 50) {
-                    // Flag eliminated
+                if (dist > circleRadius + 60) {
                     Composite.remove(engine.world, flag);
                     flagBodies.splice(index, 1);
                     
                     if (flagBodies.length === 1) {
-                        document.getElementById('top-banner').innerText = "Winner: Champion! 🏆";
+                        document.getElementById('top-banner').innerText = "Winner: Champion Country! 🏆";
                         setTimeout(() => {
                             spawnFlags(totalFlags);
-                            document.getElementById('top-banner').innerText = "Country Battle Arena";
+                            document.getElementById('top-banner').innerText = "Country Flag Battle";
                         }, 4000);
                     }
                 }
