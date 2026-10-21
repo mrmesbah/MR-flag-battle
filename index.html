@@ -26,10 +26,10 @@
             transition: background-color 0.3s;
         }
 
-        /* Top Banner placed closer right above the circle for YouTube Shorts */
+        /* Top Banner placed exactly at the red box position */
         #top-feed {
             position: absolute;
-            top: 60px;
+            top: 65px;
             font-size: 18px;
             font-weight: 700;
             display: flex;
@@ -77,16 +77,18 @@
             z-index: 1;
         }
 
+        /* Control Panel placed exactly at the lower red box positions */
         #control-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+            position: absolute;
+            bottom: 45px;
+            width: 400px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            padding: 0 45px;
             z-index: 100;
         }
         .ctrl-btn {
-            padding: 8px 16px;
+            padding: 8px 22px;
             background: #00f3ff;
             color: #0b0f19;
             border: none;
@@ -222,11 +224,10 @@
 
     <div id="game-container">
         <img id="custom-logo" src="" alt="Logo">
-    </div>
-
-    <div id="control-panel">
-        <button id="play-pause-btn" class="ctrl-btn" onclick="togglePlayPause()">⏸️ Pause</button>
-        <button class="ctrl-btn" onclick="openSettings()">⚙️ Settings</button>
+        <div id="control-panel">
+            <button id="play-pause-btn" class="ctrl-btn" onclick="togglePlayPause()">Pause</button>
+            <button class="ctrl-btn" onclick="openSettings()">Settings</button>
+        </div>
     </div>
 
     <!-- Settings Modal Panel -->
@@ -353,7 +354,7 @@
         const circleRadius = 175;
 
         const engine = Engine.create();
-        engine.world.gravity.y = 0.0; // ZERO GRAVITY for true floating bubble agitation!
+        engine.world.gravity.y = 0.0;
 
         const render = Render.create({
             element: container,
@@ -437,7 +438,7 @@
                 const ballRadius = count > 100 ? 9 : (count > 50 ? 11 : 14);
 
                 const body = Bodies.circle(offsetX, offsetY, ballRadius, {
-                    restitution: 1.0, // Absolute Bouncy Bubble Collisions
+                    restitution: 1.0,
                     friction: 0.0,
                     frictionAir: 0.0,
                     density: 0.001,
@@ -446,7 +447,6 @@
                     render: { fillStyle: '#ffffff' }
                 });
 
-                // High random velocity so they bounce constantly like bubbles
                 Body.setVelocity(body, {
                     x: (Math.random() - 0.5) * 16,
                     y: (Math.random() - 0.5) * 16
@@ -459,11 +459,9 @@
 
         spawnFlags(totalFlagsToSpawn);
 
-        // Custom Render Loop for Rotating Neon Ring & Floating Bubble Flags
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
 
-            // Draw Rotating Neon Circle with Gap
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(arenaAngle);
@@ -482,7 +480,6 @@
             ctx.stroke();
             ctx.restore();
 
-            // Draw Flag Bubbles
             activeFlagBodies.forEach(b => {
                 const pos = b.position;
                 const r = b.radiusVal;
@@ -517,7 +514,6 @@
             arenaAngle += gapRotationSpeed;
             buildArena();
 
-            // Constant agitation force so flags bounce actively like bubbles forever
             activeFlagBodies.forEach(b => {
                 Body.applyForce(b, b.position, {
                     x: (Math.random() - 0.5) * 0.002,
@@ -542,7 +538,6 @@
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
 
-                        // Auto-Loop to Next Round
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
                         }, 4500);
@@ -569,7 +564,6 @@
 
         function speakWinner(countryName) {
             if ('speechSynthesis' in window) {
-                // Ensure browser speech works properly
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(`Winner is ${countryName}`);
                 utterance.rate = 1.0;
@@ -581,7 +575,7 @@
         function togglePlayPause() {
             isPlaying = !isPlaying;
             const btn = document.getElementById('play-pause-btn');
-            btn.innerHTML = isPlaying ? "⏸️ Pause" : "▶️ Play";
+            btn.innerHTML = isPlaying ? "Pause" : "Play";
         }
 
         function openSettings() {
@@ -624,7 +618,7 @@
 
         let uploadedLogoData = "";
         function handleLogoUpload(e) {
-            .file = e.target.files[0];
+            const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(evt) {
