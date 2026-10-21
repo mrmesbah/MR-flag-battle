@@ -63,104 +63,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 280px;
-            height: 280px;
-            object-fit: contain;
-            pointer-events: none;
-            opacity: 0.5;
-            display: none;
-            z-index: 1;
-        }
-
-        #control-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;আমি একদম আন্তরিকভাবে দুঃখিত যে পূর্বের কোডটিতে এই নির্দিষ্ট ভুলগুলো রয়ে গিয়েছিল এবং আপনাকে বারবার কষ্ট পেতে হলো। আপনার দেওয়া স্ক্রিনশট এবং লাল দাগগুলো আমি একদম স্পষ্টভাবে দেখেছি[cite: 11]।
-
-আপনার বলা নির্দিষ্ট সমস্যাগুলো যা এই কোডে ১০০% ঠিক করা হয়েছে:
-১. **সার্কেলের আসল ফাঁকা জায়গা (Gap Cutout):** স্ক্রিনশটে আপনি যে গ্যাপটি সম্পূর্ণ বন্ধ দেখতে পাচ্ছিলেন, তা ঠিক করা হয়েছে। এখন নিয়ন নীল রিংয়ের একপাশে একটি নির্দিষ্ট ফাঁকা অংশ (Gap) স্পষ্টভাবে দৃশ্যমান থাকবে।
-২. **সার্কেল ঘূর্ণন (Circle Rotation):** নিয়ন রিং এবং ফাঁকা অংশটি ঘড়ির কাটার দিকে নিয়মিত ঘুরতে থাকবে।
-৩. **একদম ইউনিক পতাকা (No Duplicate Flags):** কোনো দেশের পতাকা দুই বা একাধিকবার আসবে না (যেমন বাংলাদেশে ২টা বা ব্রাজিলে ২টা দেখাতো, তা আর হবে না)। প্রতিবার ১০০% ভিন্ন দেশের অনন্য (Unique) পতাকা সেট হবে।
-৪. **বাউন্স ও ধাক্কাধাক্কি (Physics & Bounce):** বলগুলোর মধ্যে `restitution` (বাউন্স) বাড়ানো হয়েছে। বলগুলো সার্কেলের দেয়াল এবং একে অপরের সাথে আসল মার্বেলের মতো জোরালো ধাক্কা খাবে ও লাফাবে (Bounce)।
-
-অন্য কোনো কিছু পরিবর্তন না করে শুধু আপনার চিহ্নিত এই ৪টি পয়েন্ট পুরোপুরি সংশোধন করা হয়েছে।
-
----
-
-### সংশোধিত সম্পূর্ণ কোড (`index.html`):
-
-গিটহাবের `index.html` ফাইলের পুরো কোডটি ডিলিট করে নিচের কোডটি পেস্ট করে **Commit changes** দিন:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Flag Battle</title>
-    <!-- Matter.js Physics Engine -->
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js](https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js)"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0b131f;
-            color: #ffffff;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            flex-direction: column;
-            transition: background-color 0.3s;
-        }
-
-        #top-feed {
-            position: absolute;
-            top: 20px;
-            font-size: 26px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(13, 27, 42, 0.9);
-            padding: 10px 28px;
-            border-radius: 30px;
-            border: 2px solid #00f3ff;
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
-            z-index: 10;
-        }
-        #top-feed img {
-            width: 32px;
-            height: 22px;
-            border-radius: 4px;
-            object-fit: cover;
-        }
-
-        #game-container {
-            position: relative;
-            width: 600px;
-            height: 600px;
-        }
-        canvas {
-            display: block;
-            border-radius: 50%;
-        }
-
-        #custom-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 280px;
-            height: 280px;
+            width: 260px;
+            height: 260px;
             object-fit: contain;
             pointer-events: none;
             opacity: 0.5;
@@ -318,3 +222,431 @@
     <div id="control-panel">
         <button id="play-pause-btn" class="ctrl-btn" onclick="togglePlayPause()">⏸️ Pause</button>
         <button class="ctrl-btn" onclick="openSettings()">⚙️ Settings</button>
+    </div>
+
+    <!-- Settings Modal Panel -->
+    <div id="settings-modal">
+        <h2>Game Settings <span class="close-btn" onclick="closeSettings()">&times;</span></h2>
+
+        <!-- Gap rotation speed -->
+        <div class="setting-section">
+            <label>Gap rotation speed</label>
+            <div class="btn-group" id="speed-group">
+                <button class="btn-opt" data-val="0.01">4x</button>
+                <button class="btn-opt" data-val="0.015">5x</button>
+                <button class="btn-opt" data-val="0.02">6x</button>
+                <button class="btn-opt active" data-val="0.025">8x</button>
+                <button class="btn-opt" data-val="0.035">12x</button>
+                <button class="btn-opt" data-val="0.05">16x</button>
+                <button class="btn-opt" data-val="0.07">24x</button>
+            </div>
+        </div>
+
+        <!-- Number of flags -->
+        <div class="setting-section">
+            <label>Number of flags (Max 150 Unique)</label>
+            <div class="input-row">
+                <input type="number" id="flag-count-input" class="input-box" value="50" min="2" max="150">
+                <div class="btn-group" id="flag-count-group">
+                    <button class="btn-opt" data-val="20">20</button>
+                    <button class="btn-opt active" data-val="50">50</button>
+                    <button class="btn-opt" data-val="100">100</button>
+                    <button class="btn-opt" data-val="150">150</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gap size (degrees) -->
+        <div class="setting-section">
+            <label>Gap size (degrees)</label>
+            <div class="input-row">
+                <input type="number" id="gap-degree-input" class="input-box" value="35" min="10" max="120">
+                <div class="btn-group" id="gap-size-group">
+                    <button class="btn-opt" data-val="20">20°</button>
+                    <button class="btn-opt" data-val="30">30°</button>
+                    <button class="btn-opt active" data-val="35">35°</button>
+                    <button class="btn-opt" data-val="45">45°</button>
+                    <button class="btn-opt" data-val="60">60°</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Color -->
+        <div class="setting-section">
+            <label>Background Color</label>
+            <div class="color-picker-row">
+                <input type="color" id="bg-color-picker" value="#0b131f">
+                <button class="remove-btn" onclick="resetBgColor()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Circle Area Logo Upload -->
+        <div class="setting-section">
+            <label>Circle area logo (transparent PNG)</label>
+            <div class="color-picker-row">
+                <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+                <button class="upload-btn" onclick="document.getElementById('logo-input').click()">Upload logo</button>
+                <button class="remove-btn" onclick="removeLogo()">Remove</button>
+            </div>
+        </div>
+
+        <div class="save-container">
+            <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // List of 150 Unique World Countries
+        const allWorldCountries = [
+            { name: "Bangladesh", code: "bd" }, { name: "Argentina", code: "ar" }, { name: "Brazil", code: "br" }, { name: "Germany", code: "de" }, { name: "Portugal", code: "pt" },
+            { name: "France", code: "fr" }, { name: "Spain", code: "es" }, { name: "England", code: "gb-eng" }, { name: "Japan", code: "jp" }, { name: "USA", code: "us" },
+            { name: "India", code: "in" }, { name: "Pakistan", code: "pk" }, { name: "Saudi Arabia", code: "sa" }, { name: "Turkey", code: "tr" }, { name: "Italy", code: "it" },
+            { name: "Netherlands", code: "nl" }, { name: "Croatia", code: "hr" }, { name: "Morocco", code: "ma" }, { name: "Uruguay", code: "uy" }, { name: "Belgium", code: "be" },
+            { name: "Mexico", code: "mx" }, { name: "Canada", code: "ca" }, { name: "South Korea", code: "kr" }, { name: "Australia", code: "au" }, { name: "Egypt", code: "eg" },
+            { name: "Nigeria", code: "ng" }, { name: "Ghana", code: "gh" }, { name: "Senegal", code: "sn" }, { name: "Colombia", code: "co" }, { name: "Chile", code: "cl" },
+            { name: "Afghanistan", code: "af" }, { name: "Albania", code: "al" }, { name: "Algeria", code: "dz" }, { name: "Andorra", code: "ad" }, { name: "Angola", code: "ao" },
+            { name: "Armenia", code: "am" }, { name: "Austria", code: "at" }, { name: "Azerbaijan", code: "az" }, { name: "Bahamas", code: "bs" }, { name: "Bahrain", code: "bh" },
+            { name: "Barbados", code: "bb" }, { name: "Belarus", code: "by" }, { name: "Belize", code: "bz" }, { name: "Benin", code: "bj" }, { name: "Bhutan", code: "bt" },
+            { name: "Bolivia", code: "bo" }, { name: "Bosnia", code: "ba" }, { name: "Botswana", code: "bw" }, { name: "Brunei", code: "bn" }, { name: "Bulgaria", code: "bg" },
+            { name: "Burkina Faso", code: "bf" }, { name: "Burundi", code: "bi" }, { name: "Cambodia", code: "kh" }, { name: "Cameroon", code: "cm" }, { name: "Chad", code: "td" },
+            { name: "China", code: "cn" }, { name: "Congo", code: "cg" }, { name: "Costa Rica", code: "cr" }, { name: "Cuba", code: "cu" }, { name: "Cyprus", code: "cy" },
+            { name: "Czech Republic", code: "cz" }, { name: "Denmark", code: "dk" }, { name: "Djibouti", code: "dj" }, { name: "Dominican Rep", code: "do" }, { name: "Ecuador", code: "ec" },
+            { name: "El Salvador", code: "sv" }, { name: "Estonia", code: "ee" }, { name: "Ethiopia", code: "et" }, { name: "Fiji", code: "fj" }, { name: "Finland", code: "fi" },
+            { name: "Gabon", code: "ga" }, { name: "Gambia", code: "gm" }, { name: "Georgia", code: "ge" }, { name: "Greece", code: "gr" }, { name: "Guatemala", code: "gt" },
+            { name: "Guinea", code: "gn" }, { name: "Haiti", code: "ht" }, { name: "Honduras", code: "hn" }, { name: "Hungary", code: "hu" }, { name: "Iceland", code: "is" },
+            { name: "Indonesia", code: "id" }, { name: "Iran", code: "ir" }, { name: "Iraq", code: "iq" }, { name: "Ireland", code: "ie" }, { name: "Israel", code: "il" },
+            { name: "Jamaica", code: "jm" }, { name: "Jordan", code: "jo" }, { name: "Kazakhstan", code: "kz" }, { name: "Kenya", code: "ke" }, { name: "Kuwait", code: "kw" },
+            { name: "Kyrgyzstan", code: "kg" }, { name: "Laos", code: "la" }, { name: "Latvia", code: "lv" }, { name: "Lebanon", code: "lb" }, { name: "Libya", code: "ly" },
+            { name: "Lithuania", code: "lt" }, { name: "Luxembourg", code: "lu" }, { name: "Malaysia", code: "my" }, { name: "Maldives", code: "mv" }, { name: "Mali", code: "ml" },
+            { name: "Malta", code: "mt" }, { name: "Moldova", code: "md" }, { name: "Monaco", code: "mc" }, { name: "Mongolia", code: "mn" }, { name: "Montenegro", code: "me" },
+            { name: "Mozambique", code: "mz" }, { name: "Myanmar", code: "mm" }, { name: "Namibia", code: "na" }, { name: "Nepal", code: "np" }, { name: "New Zealand", code: "nz" },
+            { name: "Nicaragua", code: "ni" }, { name: "Niger", code: "ne" }, { name: "North Korea", code: "kp" }, { name: "Norway", code: "no" }, { name: "Oman", code: "om" },
+            { name: "Palestine", code: "ps" }, { name: "Panama", code: "pa" }, { name: "Paraguay", code: "py" }, { name: "Peru", code: "pe" }, { name: "Philippines", code: "ph" },
+            { name: "Poland", code: "pl" }, { name: "Qatar", code: "qa" }, { name: "Romania", code: "ro" }, { name: "Russia", code: "ru" }, { name: "Rwanda", code: "rw" },
+            { name: "Serbia", code: "rs" }, { name: "Singapore", code: "sg" }, { name: "Slovakia", code: "sk" }, { name: "Slovenia", code: "si" }, { name: "Somalia", code: "so" },
+            { name: "South Africa", code: "za" }, { name: "Sri Lanka", code: "lk" }, { name: "Sudan", code: "sd" }, { name: "Sweden", code: "se" }, { name: "Switzerland", code: "ch" },
+            { name: "Syria", code: "sy" }, { name: "Taiwan", code: "tw" }, { name: "Tajikistan", code: "tj" }, { name: "Tanzania", code: "tz" }, { name: "Thailand", code: "th" },
+            { name: "Togo", code: "tg" }, { name: "Tunisia", code: "tn" }, { name: "Turkmenistan", code: "tm" }, { name: "Uganda", code: "ug" }, { name: "Ukraine", code: "ua" },
+            { name: "UAE", code: "ae" }, { name: "Uzbekistan", code: "uz" }, { name: "Venezuela", code: "ve" }, { name: "Vietnam", code: "vn" }, { name: "Yemen", code: "ye" },
+            { name: "Zambia", code: "zm" }, { name: "Zimbabwe", code: "zw" }
+        ];
+
+        const loadedFlagImages = {};
+        allWorldCountries.forEach(c => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = `https://flagcdn.com/w80/${c.code}.png`;
+            loadedFlagImages[c.code] = img;
+        });
+
+        const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
+
+        const container = document.getElementById('game-container');
+        const width = 600;
+        const height = 600;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const circleRadius = 250;
+
+        const engine = Engine.create();
+        engine.world.gravity.y = 0.65; // Dynamic Gravity
+
+        const render = Render.create({
+            element: container,
+            engine: engine,
+            options: {
+                width: width,
+                height: height,
+                wireframes: false,
+                background: 'transparent'
+            }
+        });
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        let gapRotationSpeed = 0.025;
+        let totalFlagsToSpawn = 50;
+        let gapSizeDegrees = 35;
+        let arenaAngle = 0;
+        let isPlaying = true;
+        let isGameOver = false;
+
+        let boundarySegments = [];
+        let activeFlagBodies = [];
+
+        function buildArena() {
+            boundarySegments.forEach(b => Composite.remove(engine.world, b));
+            boundarySegments = [];
+
+            const totalSegs = 90;
+            const anglePerSeg = (Math.PI * 2) / totalSegs;
+            const gapRad = (gapSizeDegrees * Math.PI) / 180;
+            const halfGap = gapRad / 2;
+
+            for (let i = 0; i < totalSegs; i++) {
+                const segAngle = i * anglePerSeg;
+
+                let diff = segAngle % (Math.PI * 2);
+                if (diff > Math.PI) diff -= Math.PI * 2;
+
+                if (Math.abs(diff) < halfGap) continue; // Gap for falling flags
+
+                const worldAngle = segAngle + arenaAngle;
+                const x = centerX + Math.cos(worldAngle) * circleRadius;
+                const y = centerY + Math.sin(worldAngle) * circleRadius;
+
+                const wall = Bodies.rectangle(x, y, 22, 18, {
+                    isStatic: true,
+                    angle: worldAngle + Math.PI / 2,
+                    restitution: 1.0,
+                    friction: 0.0,
+                    render: { fillStyle: 'transparent' }
+                });
+                boundarySegments.push(wall);
+            }
+            Composite.add(engine.world, boundarySegments);
+        }
+
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function spawnFlags(count) {
+            activeFlagBodies.forEach(f => Composite.remove(engine.world, f));
+            activeFlagBodies = [];
+            isGameOver = false;
+
+            // Strict Unique Selection Filter
+            const uniqueList = shuffleArray(allWorldCountries).slice(0, Math.min(count, allWorldCountries.length));
+
+            for (let i = 0; i < uniqueList.length; i++) {
+                const country = uniqueList[i];
+                const offsetX = centerX + (Math.random() - 0.5) * 140;
+                const offsetY = centerY + (Math.random() - 0.5) * 100;
+
+                const ballRadius = count > 100 ? 11 : (count > 50 ? 13 : 16);
+
+                const body = Bodies.circle(offsetX, offsetY, ballRadius, {
+                    restitution: 0.98, // High Bounciness
+                    friction: 0.0001,
+                    frictionAir: 0.0001,
+                    density: 0.005,
+                    countryData: country,
+                    radiusVal: ballRadius,
+                    render: { fillStyle: '#ffffff' }
+                });
+
+                Body.setVelocity(body, {
+                    x: (Math.random() - 0.5) * 6,
+                    y: (Math.random() - 0.5) * 6
+                });
+
+                activeFlagBodies.push(body);
+            }
+            Composite.add(engine.world, activeFlagBodies);
+        }
+
+        spawnFlags(totalFlagsToSpawn);
+
+        // Custom Render Loop with Gap Angle
+        Events.on(render, 'afterRender', () => {
+            const ctx = render.context;
+
+            // Draw Rotating Neon Circle WITH GAP
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(arenaAngle);
+
+            const gapRad = (gapSizeDegrees * Math.PI) / 180;
+            const startAngle = gapRad / 2;
+            const endAngle = Math.PI * 2 - (gapRad / 2);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, circleRadius, startAngle, endAngle);
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = '#00f3ff';
+            ctx.shadowBlur = 25;
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw Flag Images
+            activeFlagBodies.forEach(b => {
+                const pos = b.position;
+                const r = b.radiusVal;
+                const cData = b.countryData;
+                const img = loadedFlagImages[cData.code];
+
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate(b.angle);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.clip();
+
+                if (img && img.complete) {
+                    ctx.drawImage(img, -r, -r, r * 2, r * 2);
+                } else {
+                    ctx.fillStyle = '#ff0055';
+                    ctx.fill();
+                }
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+            });
+        });
+
+        Events.on(engine, 'beforeUpdate', () => {
+            if (!isPlaying || isGameOver) return;
+
+            arenaAngle += gapRotationSpeed;
+            buildArena();
+
+            for (let i = activeFlagBodies.length - 1; i >= 0; i--) {
+                const b = activeFlagBodies[i];
+                const dist = Math.hypot(b.position.x - centerX, b.position.y - centerY);
+
+                if (dist > circleRadius + 30) {
+                    const cData = b.countryData;
+                    updateTopFeed(cData);
+
+                    Composite.remove(engine.world, b);
+                    activeFlagBodies.splice(i, 1);
+
+                    if (activeFlagBodies.length === 1) {
+                        isGameOver = true;
+                        const winner = activeFlagBodies[0].countryData;
+                        showWinnerBanner(winner);
+                        speakWinner(winner.name);
+
+                        setTimeout(() => {
+                            spawnFlags(totalFlagsToSpawn);
+                        }, 4500);
+                    }
+                }
+            }
+        });
+
+        function updateTopFeed(country) {
+            const feedFlag = document.getElementById('feed-flag');
+            const feedText = document.getElementById('feed-text');
+
+            feedFlag.innerHTML = `<img src="https://flagcdn.com/w80/${country.code}.png">`;
+            feedText.innerText = `${country.name} Eliminated`;
+        }
+
+        function showWinnerBanner(country) {
+            const feedFlag = document.getElementById('feed-flag');
+            const feedText = document.getElementById('feed-text');
+
+            feedFlag.innerHTML = `🏆`;
+            feedText.innerText = `Winner: ${country.name}!`;
+        }
+
+        function speakWinner(countryName) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(`Winner is ${countryName}`);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('play-pause-btn');
+            btn.innerHTML = isPlaying ? "⏸️ Pause" : "▶️ Play";
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').style.display = 'block';
+        }
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        document.querySelectorAll('#speed-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#speed-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gapRotationSpeed = parseFloat(this.getAttribute('data-val'));
+            });
+        });
+
+        document.querySelectorAll('#flag-count-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#flag-count-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const val = parseInt(this.getAttribute('data-val'));
+                document.getElementById('flag-count-input').value = val;
+            });
+        });
+
+        document.querySelectorAll('#gap-size-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#gap-size-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const val = parseInt(this.getAttribute('data-val'));
+                document.getElementById('gap-degree-input').value = val;
+            });
+        });
+
+        function resetBgColor() {
+            document.body.style.backgroundColor = "#0b131f";
+            document.getElementById('bg-color-picker').value = "#0b131f";
+        }
+
+        let uploadedLogoData = "";
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    uploadedLogoData = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogo() {
+            uploadedLogoData = "";
+            document.getElementById('logo-input').value = "";
+        }
+
+        function saveSettings() {
+            gapSizeDegrees = parseInt(document.getElementById('gap-degree-input').value) || 35;
+            const newCount = parseInt(document.getElementById('flag-count-input').value) || 50;
+            const bgColor = document.getElementById('bg-color-picker').value;
+
+            document.body.style.backgroundColor = bgColor;
+
+            const logoImg = document.getElementById('custom-logo');
+            if (uploadedLogoData) {
+                logoImg.src = uploadedLogoData;
+                logoImg.style.display = 'block';
+            } else {
+                logoImg.src = "";
+                logoImg.style.display = 'none';
+            }
+
+            if (newCount !== totalFlagsToSpawn) {
+                totalFlagsToSpawn = newCount;
+                spawnFlags(totalFlagsToSpawn);
+            }
+
+            closeSettings();
+        }
+    </script>
+</body>
+</html>
