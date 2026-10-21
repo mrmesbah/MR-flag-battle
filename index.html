@@ -26,20 +26,30 @@
             transition: background-color 0.3s;
         }
 
+        /* Dynamic Top Feed (Normal, Eliminated=Red, Winner=Green) */
         #top-feed {
             position: absolute;
-            top: 45px;
+            top: 35px;
             font-size: 18px;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(13, 27, 42, 0.9);
-            padding: 6px 18px;
+            background: rgba(13, 27, 42, 0.95);
+            padding: 8px 22px;
             border-radius: 25px;
             border: 2px solid #00f3ff;
             box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
             z-index: 10;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #top-feed.eliminated {
+            border-color: #ff0055;
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.7);
+        }
+        #top-feed.winner {
+            border-color: #00ff88;
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.7);
         }
         #top-feed img {
             width: 26px;
@@ -48,25 +58,27 @@
             object-fit: cover;
         }
 
-        /* Leaderboard Bar - Positions below Top Feed */
+        /* Professional Leaderboard Bar */
         #leaderboard-bar {
             position: absolute;
-            top: 95px;
-            width: 320px;
-            height: 48px;
-            background: rgba(13, 27, 42, 0.85);
-            border: 2px solid rgba(0, 243, 255, 0.4);
+            top: 90px;
+            width: 380px;
+            height: 52px;
+            background: rgba(11, 19, 31, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
             border-radius: 12px;
             display: flex;
             align-items: center;
-            padding: 4px 10px;
-            gap: 10px;
+            gap: 8px;
+            padding: 4px 12px;
             overflow-x: auto;
             white-space: nowrap;
             z-index: 10;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 243, 255, 0.15);
+            scrollbar-width: thin;
+            scrollbar-color: #00f3ff transparent;
         }
-        /* Custom Scrollbar for Leaderboard */
         #leaderboard-bar::-webkit-scrollbar {
             height: 4px;
         }
@@ -74,26 +86,43 @@
             background: #00f3ff;
             border-radius: 4px;
         }
-        .leaderboard-item {
-            display: flex;
+        
+        /* Leaderboard Items Styling */
+        .leader-item {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
             padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 14px;
             font-size: 13px;
-            font-weight: bold;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             flex-shrink: 0;
         }
-        .leaderboard-item img {
+        .leader-item img {
             width: 22px;
             height: 14px;
             border-radius: 2px;
             object-fit: cover;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         }
-        .leaderboard-count {
+        .leader-wins {
             color: #00f3ff;
+            background: rgba(0, 243, 255, 0.15);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-left: 2px;
+        }
+        .leader-item.top1 {
+            border-color: #ffd700;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+        .leader-item.top1 .leader-wins {
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
         }
 
         #game-container {
@@ -107,20 +136,6 @@
         }
         canvas {
             display: block;
-        }
-
-        #custom-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 180px;
-            height: 180px;
-            object-fit: contain;
-            pointer-events: none;
-            opacity: 0.5;
-            display: none;
-            z-index: 1;
         }
 
         #control-panel {
@@ -268,10 +283,11 @@
     </div>
 
     <!-- Leaderboard Container -->
-    <div id="leaderboard-bar"></div>
+    <div id="leaderboard-bar">
+        <span style="font-size: 12px; color: #888;">Wins:</span>
+    </div>
 
     <div id="game-container">
-        <img id="custom-logo" src="" alt="Logo">
         <div id="control-panel">
             <button id="play-pause-btn" class="ctrl-btn" onclick="togglePlayPause()">Pause</button>
             <button class="ctrl-btn" onclick="openSettings()">Settings</button>
@@ -384,41 +400,29 @@
             { name: "Zambia", code: "zm" }, { name: "Zimbabwe", code: "zw" }
         ];
 
-        // Leaderboard Win Tracking System
-        let winScores = JSON.parse(localStorage.getItem('flag_win_scores') || '{}');
+        // Wins Data Tracking
+        const winScores = {};
 
-        function recordWin(countryCode) {
-            winScores[countryCode] = (winScores[countryCode] || 0) + 1;
-            localStorage.setItem('flag_win_scores', JSON.stringify(winScores));
-            updateLeaderboardUI();
+        function addWinAndRenderLeaderboard(country) {
+            winScores[country.code] = (winScores[country.code] || { name: country.name, wins: 0, code: country.code });
+            winScores[country.code].wins += 1;
+
+            renderLeaderboard();
         }
 
-        function updateLeaderboardUI() {
-            const container = document.getElementById('leaderboard-bar');
-            if (!container) return;
+        function renderLeaderboard() {
+            const bar = document.getElementById('leaderboard-bar');
+            const sortedList = Object.values(winScores).sort((a, b) => b.wins - a.wins);
 
-            const sorted = Object.keys(winScores)
-                .map(code => {
-                    const country = allWorldCountries.find(c => c.code === code);
-                    return {
-                        code: code,
-                        name: country ? country.name : code,
-                        wins: winScores[code]
-                    };
-                })
-                .sort((a, b) => b.wins - a.wins);
+            if (sortedList.length === 0) return;
 
-            if (sorted.length === 0) {
-                container.innerHTML = `<span style="font-size:12px; color:#888; width:100%; text-align:center;">No Wins Yet</span>`;
-                return;
-            }
-
-            container.innerHTML = sorted.map(item => `
-                <div class="leaderboard-item">
-                    <img src="https://flagcdn.com/w80/${item.code}.png" alt="${item.name}">
-                    <span class="leaderboard-count">${item.wins}</span>
-                </div>
-            `).join('');
+            bar.innerHTML = '';
+            sortedList.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = `leader-item ${idx === 0 ? 'top1' : ''}`;
+                div.innerHTML = `<img src="https://flagcdn.com/w80/${item.code}.png"> ${item.name} <span class="leader-wins">${item.wins}</span>`;
+                bar.appendChild(div);
+            });
         }
 
         const loadedFlagImages = {};
@@ -495,6 +499,9 @@
         let boundarySegments = [];
         let activeFlagBodies = [];
 
+        // Image Object for Background Logo
+        const customLogoImage = new Image();
+
         function buildArena() {
             boundarySegments.forEach(b => Composite.remove(engine.world, b));
             boundarySegments = [];
@@ -542,6 +549,10 @@
             activeFlagBodies = [];
             isGameOver = false;
 
+            // Reset top feed styling
+            const feed = document.getElementById('top-feed');
+            feed.className = '';
+
             const uniqueList = shuffleArray(allWorldCountries).slice(0, Math.min(count, allWorldCountries.length));
 
             for (let i = 0; i < uniqueList.length; i++) {
@@ -572,7 +583,6 @@
         }
 
         spawnFlags(totalFlagsToSpawn);
-        updateLeaderboardUI();
 
         // Active Collision Listener for Thuk-Thuk Sound
         Events.on(engine, 'collisionStart', (event) => {
@@ -590,6 +600,22 @@
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
 
+            // 1. DRAW BACKGROUND LOGO FIRST (Behind Everything)
+            if (customLogoImage.src && customLogoImage.complete) {
+                ctx.save();
+                ctx.globalAlpha = 0.5; // Transparent effect
+                const logoSize = 180;
+                ctx.drawImage(
+                    customLogoImage, 
+                    centerX - logoSize / 2, 
+                    centerY - logoSize / 2, 
+                    logoSize, 
+                    logoSize
+                );
+                ctx.restore();
+            }
+
+            // 2. DRAW ROTATING ARENA CIRCLE
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(arenaAngle);
@@ -608,6 +634,7 @@
             ctx.stroke();
             ctx.restore();
 
+            // 3. DRAW FLAG BALLS (Over the Logo)
             activeFlagBodies.forEach(b => {
                 const pos = b.position;
                 const r = b.radiusVal;
@@ -665,7 +692,9 @@
                         const winner = activeFlagBodies[0].countryData;
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
-                        recordWin(winner.code);
+
+                        // Track Wins in Leaderboard
+                        addWinAndRenderLeaderboard(winner);
 
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
@@ -676,22 +705,26 @@
         });
 
         function updateTopFeed(country) {
+            const feed = document.getElementById('top-feed');
             const feedFlag = document.getElementById('feed-flag');
             const feedText = document.getElementById('feed-text');
 
+            feed.className = 'eliminated'; // Change border/glow to RED
             feedFlag.innerHTML = `<img src="https://flagcdn.com/w80/${country.code}.png">`;
             feedText.innerText = `${country.name} Eliminated`;
         }
 
         function showWinnerBanner(country) {
+            const feed = document.getElementById('top-feed');
             const feedFlag = document.getElementById('feed-flag');
             const feedText = document.getElementById('feed-text');
 
+            feed.className = 'winner'; // Change border/glow to GREEN
             feedFlag.innerHTML = `🏆`;
             feedText.innerText = `Winner: ${country.name}!`;
         }
 
-        // FIXED: Reliable Text-to-Speech Winner Announcement
+        // Reliable Text-to-Speech Winner Announcement
         function speakWinner(countryName) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -701,7 +734,6 @@
                 utterance.pitch = 1.1;
                 utterance.volume = 1.0;
                 
-                // Ensure voices are loaded or trigger immediately
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -750,20 +782,19 @@
             document.getElementById('bg-color-picker').value = "#0b131f";
         }
 
-        let uploadedLogoData = "";
         function handleLogoUpload(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(evt) {
-                    uploadedLogoData = evt.target.result;
+                    customLogoImage.src = evt.target.result;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
         function removeLogo() {
-            uploadedLogoData = "";
+            customLogoImage.src = "";
             document.getElementById('logo-input').value = "";
         }
 
@@ -773,15 +804,6 @@
             const bgColor = document.getElementById('bg-color-picker').value;
 
             document.body.style.backgroundColor = bgColor;
-
-            const logoImg = document.getElementById('custom-logo');
-            if (uploadedLogoData) {
-                logoImg.src = uploadedLogoData;
-                logoImg.style.display = 'block';
-            } else {
-                logoImg.src = "";
-                logoImg.style.display = 'none';
-            }
 
             if (newCount !== totalFlagsToSpawn) {
                 totalFlagsToSpawn = newCount;
