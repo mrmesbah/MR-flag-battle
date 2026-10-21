@@ -4,135 +4,356 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Country Flag Battle</title>
+    <!-- Matter.js Physics Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
         body {
             margin: 0;
             padding: 0;
-            background-color: #050814;
+            background-color: #0d1b2a;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
             flex-direction: column;
+            transition: background-color 0.3s;
         }
-        #top-banner {
+
+        /* Top Elimination & Typing Banner */
+        #top-feed {
             position: absolute;
-            top: 20px;
-            font-size: 32px;
-            font-weight: bold;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 10px 30px;
-            border-radius: 40px;
-            border: 2px solid #ff0055;
-            box-shadow: 0 0 20px #ff0055;
-            letter-spacing: 1px;
-            text-align: center;
+            top: 25px;
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(13, 27, 42, 0.85);
+            padding: 8px 24px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            min-height: 50px;
+            z-index: 10;
         }
+        #top-feed img {
+            width: 32px;
+            height: 22px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+
         #game-container {
             position: relative;
-            box-shadow: 0 0 40px rgba(0, 243, 255, 0.3);
-            border-radius: 50%;
+            width: 580px;
+            height: 580px;
         }
         canvas {
             display: block;
             border-radius: 50%;
         }
-        #settings-btn {
+
+        /* Center Custom Logo */
+        #custom-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            pointer-events: none;
+            opacity: 0.35;
+            display: none;
+            z-index: 1;
+        }
+
+        /* Settings Toggle Button */
+        #settings-toggle {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #00f3ff;
-            color: #0b0f19;
-            border: none;
-            padding: 12px 24px;
-            font-weight: bold;
-            border-radius: 10px;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 22px;
             cursor: pointer;
-            box-shadow: 0 0 15px #00f3ff;
-            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: transform 0.2s;
         }
-        #settings-panel {
+        #settings-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Modal Settings Panel (Matching Image 2) */
+        #settings-modal {
             display: none;
             position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #00f3ff;
-            padding: 20px;
-            border-radius: 15px;
-            width: 260px;
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 360px;
+            background: #ffffff;
+            color: #1a1a1a;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 101;
+            max-height: 90vh;
+            overflow-y: auto;
         }
-        .setting-group {
-            margin-bottom: 15px;
+        #settings-modal h2 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
         }
-        .setting-group label {
+        .close-btn {
+            cursor: pointer;
+            font-size: 22px;
+            color: #888;
+        }
+
+        .setting-section {
+            margin-bottom: 20px;
+        }
+        .setting-section label {
             display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .btn-opt {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-opt.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .input-box {
+            width: 80px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
             font-size: 14px;
-            margin-bottom: 6px;
-            color: #00f3ff;
             font-weight: 600;
         }
-        .setting-group select {
-            width: 100%;
-            padding: 8px;
-            background: #1e293b;
+
+        .color-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .color-picker-row input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .upload-btn {
+            padding: 8px 16px;
+            background: #2563eb;
             color: white;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .remove-btn {
+            padding: 8px 16px;
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
 
-    <div id="top-banner">Country Flag Battle</div>
-    <div id="game-container"></div>
+    <div id="top-feed">
+        <span id="feed-flag">🌐</span>
+        <span id="feed-text">Country Flag Battle</span>
+    </div>
 
-    <button id="settings-btn" onclick="toggleSettings()">⚙️ Settings</button>
+    <div id="game-container">
+        <img id="custom-logo" src="" alt="Logo">
+    </div>
 
-    <div id="settings-panel">
-        <div class="setting-group">
-            <label>Gap Rotation Speed</label>
-            <select id="speed-select" onchange="updateSettings()">
-                <option value="0.01">2x</option>
-                <option value="0.02" selected>4x</option>
-                <option value="0.04">8x</option>
-                <option value="0.08">16x</option>
-            </select>
+    <button id="settings-toggle" onclick="openSettings()">⚙️</button>
+
+    <!-- Settings Panel Matching User Screenshot 2 -->
+    <div id="settings-modal">
+        <h2>Game Settings <span class="close-btn" onclick="closeSettings()">&times;</span></h2>
+
+        <!-- Gap rotation speed -->
+        <div class="setting-section">
+            <label>Gap rotation speed</label>
+            <div class="btn-group" id="speed-group">
+                <button class="btn-opt" data-val="0.01">4x</button>
+                <button class="btn-opt" data-val="0.015">5x</button>
+                <button class="btn-opt" data-val="0.02">6x</button>
+                <button class="btn-opt active" data-val="0.025">8x</button>
+                <button class="btn-opt" data-val="0.035">12x</button>
+                <button class="btn-opt" data-val="0.05">16x</button>
+                <button class="btn-opt" data-val="0.07">24x</button>
+            </div>
         </div>
-        <div class="setting-group">
-            <label>Number of Flags</label>
-            <select id="flags-select" onchange="updateSettings()">
-                <option value="10">10 Flags</option>
-                <option value="20">20 Flags</option>
-                <option value="30" selected>30 Flags</option>
-                <option value="50">50 Flags</option>
-            </select>
+
+        <!-- Number of flags -->
+        <div class="setting-section">
+            <label>Number of flags</label>
+            <div class="input-row">
+                <input type="number" id="flag-count-input" class="input-box" value="50" min="2" max="200" onchange="onCustomFlagCount(this.value)">
+                <div class="btn-group" id="flag-count-group">
+                    <button class="btn-opt" data-val="4">4</button>
+                    <button class="btn-opt" data-val="8">8</button>
+                    <button class="btn-opt" data-val="12">12</button>
+                    <button class="btn-opt" data-val="20">20</button>
+                    <button class="btn-opt active" data-val="50">50</button>
+                    <button class="btn-opt" data-val="100">100</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gap size (degrees) -->
+        <div class="setting-section">
+            <label>Gap size (degrees)</label>
+            <div class="input-row">
+                <input type="number" id="gap-degree-input" class="input-box" value="35" min="10" max="120" onchange="onCustomGapDegree(this.value)">
+                <div class="btn-group" id="gap-size-group">
+                    <button class="btn-opt" data-val="20">20°</button>
+                    <button class="btn-opt" data-val="30">30°</button>
+                    <button class="btn-opt active" data-val="35">35°</button>
+                    <button class="btn-opt" data-val="45">45°</button>
+                    <button class="btn-opt" data-val="60">60°</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Color -->
+        <div class="setting-section">
+            <label>Background Color</label>
+            <div class="color-picker-row">
+                <input type="color" id="bg-color-picker" value="#0d1b2a" onchange="changeBgColor(this.value)">
+                <button class="remove-btn" onclick="resetBgColor()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Circle Area Logo Upload -->
+        <div class="setting-section">
+            <label>Circle area logo (transparent PNG)</label>
+            <div class="color-picker-row">
+                <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+                <button class="upload-btn" onclick="document.getElementById('logo-input').click()">Upload logo</button>
+                <button class="remove-btn" onclick="removeLogo()">Remove</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // List of Countries with ISO codes for official flags
+        const countriesList = [
+            { name: "Bangladesh", code: "bd" }, { name: "Argentina", code: "ar" },
+            { name: "Brazil", code: "br" }, { name: "Germany", code: "de" },
+            { name: "Portugal", code: "pt" }, { name: "France", code: "fr" },
+            { name: "Spain", code: "es" }, { name: "England", code: "gb-eng" },
+            { name: "Japan", code: "jp" }, { name: "USA", code: "us" },
+            { name: "India", code: "in" }, { name: "Pakistan", code: "pk" },
+            { name: "Saudi Arabia", code: "sa" }, { name: "Turkey", code: "tr" },
+            { name: "Italy", code: "it" }, { name: "Netherlands", code: "nl" },
+            { name: "Croatia", code: "hr" }, { name: "Morocco", code: "ma" },
+            { name: "Uruguay", code: "uy" }, { name: "Belgium", code: "be" },
+            { name: "Mexico", code: "mx" }, { name: "Canada", code: "ca" },
+            { name: "South Korea", code: "kr" }, { name: "Australia", code: "au" },
+            { name: "Egypt", code: "eg" }, { name: "Nigeria", code: "ng" },
+            { name: "Ghana", code: "gh" }, { name: "Senegal", code: "sn" },
+            { name: "Cameroon", code: "cm" }, { name: "Colombia", code: "co" },
+            { name: "Chile", code: "cl" }, { name: "Peru", code: "pe" },
+            { name: "Sweden", code: "se" }, { name: "Denmark", code: "dk" },
+            { name: "Switzerland", code: "ch" }, { name: "Poland", code: "pl" },
+            { name: "Ukraine", code: "ua" }, { name: "Norway", code: "no" },
+            { name: "South Africa", code: "za" }, { name: "Algeria", code: "dz" },
+            { name: "Tunisia", code: "tn" }, { name: "Ivory Coast", code: "ci" },
+            { name: "Iran", code: "ir" }, { name: "Iraq", code: "iq" },
+            { name: "UAE", code: "ae" }, { name: "Qatar", code: "qa" },
+            { name: "Palestine", code: "ps" }, { name: "Indonesia", code: "id" },
+            { name: "Malaysia", code: "my" }, { name: "Vietnam", code: "vn" }
+        ];
+
+        // Preload Flag Images
+        const loadedFlagImages = {};
+        countriesList.forEach(c => {
+            const img = new Image();
+            img.src = `https://flagcdn.com/w80/${c.code}.png`;
+            loadedFlagImages[c.code] = img;
+        });
+
+        // Matter.js Setup
         const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
 
-        const width = 650;
-        const height = 650;
+        const container = document.getElementById('game-container');
+        const width = 580;
+        const height = 580;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const circleRadius = 255;
 
         const engine = Engine.create();
-        engine.world.gravity.y = 0.4;
+        engine.world.gravity.y = 0.45;
 
         const render = Render.create({
-            element: document.getElementById('game-container'),
+            element: container,
             engine: engine,
             options: {
                 width: width,
                 height: height,
                 wireframes: false,
-                background: '#070b19'
+                background: 'transparent'
             }
         });
 
@@ -140,99 +361,255 @@
         const runner = Runner.create();
         Runner.run(runner, engine);
 
-        const circleRadius = 260;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const segments = 40; // Smooth circle
-        let boundaryBodies = [];
-        let rotationSpeed = 0.02;
-        let totalFlags = 30;
-        let flagBodies = [];
+        // Dynamic Game State Variables
+        let gapRotationSpeed = 0.025;
+        let totalFlagsToSpawn = 50;
+        let gapSizeDegrees = 35;
+        let arenaAngle = 0;
 
-        // Sample country emojis / colors representing flags for visual clarity
-        const flagColors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#9b59b6', '#ff6b81', '#3742fa', '#7bed9f', '#eccc68'];
+        let boundarySegments = [];
+        let activeFlagBodies = [];
 
-        function createArena() {
-            // Remove old walls if any
-            boundaryBodies.forEach(wall => Composite.remove(engine.world, wall));
-            boundaryBodies = [];
+        // Function to Create Rotating Arena Circle with Gap
+        function buildArena() {
+            boundarySegments.forEach(b => Composite.remove(engine.world, b));
+            boundarySegments = [];
 
-            const angleStep = (Math.PI * 2) / segments;
-            const gapStart = 16; // Defines the gap position
-            const gapEnd = 20;   // Gap size
+            const totalSegs = 72;
+            const anglePerSeg = (Math.PI * 2) / totalSegs;
+            const gapRad = (gapSizeDegrees * Math.PI) / 180;
+            const halfGap = gapRad / 2;
 
-            for (let i = 0; i < segments; i++) {
-                if (i >= gapStart && i <= gapEnd) continue; // Skip to create gap
+            for (let i = 0; i < totalSegs; i++) {
+                const segAngle = i * anglePerSeg;
 
-                const angle = i * angleStep;
-                const x = centerX + Math.cos(angle) * circleRadius;
-                const y = centerY + Math.sin(angle) * circleRadius;
+                // Check gap opening at top/center
+                let normalizedAngle = (segAngle - arenaAngle) % (Math.PI * 2);
+                if (normalizedAngle < 0) normalizedAngle += Math.PI * 2;
 
-                const wall = Bodies.rectangle(x, y, 45, 15, {
+                const topAngle = Math.PI * 1.5; // Top gap
+                let diff = Math.abs(normalizedAngle - topAngle);
+                if (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+                if (diff < halfGap) continue; // Leave Gap Empty
+
+                const x = centerX + Math.cos(segAngle) * circleRadius;
+                const y = centerY + Math.sin(segAngle) * circleRadius;
+
+                const wall = Bodies.rectangle(x, y, 26, 16, {
                     isStatic: true,
-                    angle: angle + Math.PI / 2,
-                    render: { fillStyle: '#00f3ff' }
+                    angle: segAngle + Math.PI / 2,
+                    render: { fillStyle: '#3b82f6' }
                 });
-                boundaryBodies.push(wall);
+                boundarySegments.push(wall);
             }
-            Composite.add(engine.world, boundaryBodies);
+            Composite.add(engine.world, boundarySegments);
         }
 
-        createArena();
+        buildArena();
 
+        // Spawn Flag Balls
         function spawnFlags(count) {
-            flagBodies.forEach(f => Composite.remove(engine.world, f));
-            flagBodies = [];
+            activeFlagBodies.forEach(f => Composite.remove(engine.world, f));
+            activeFlagBodies = [];
 
             for (let i = 0; i < count; i++) {
-                const offsetX = centerX + (Math.random() - 0.5) * 120;
-                const offsetY = centerY + (Math.random() - 0.5) * 120;
-                const flag = Bodies.circle(offsetX, offsetY, 16, {
-                    restitution: 0.85,
-                    friction: 0.002,
-                    render: {
-                        fillStyle: flagColors[i % flagColors.length]
-                    }
+                const country = countriesList[i % countriesList.length];
+                const offsetX = centerX + (Math.random() - 0.5) * 140;
+                const offsetY = centerY + (Math.random() - 0.5) * 140;
+
+                const ballRadius = count > 80 ? 11 : (count > 30 ? 14 : 18);
+
+                const body = Bodies.circle(offsetX, offsetY, ballRadius, {
+                    restitution: 0.75,
+                    friction: 0.005,
+                    density: 0.001,
+                    countryData: country,
+                    radiusVal: ballRadius,
+                    render: { fillStyle: '#ffffff' }
                 });
-                flagBodies.push(flag);
+
+                activeFlagBodies.push(body);
             }
-            Composite.add(engine.world, flagBodies);
+            Composite.add(engine.world, activeFlagBodies);
         }
 
-        spawnFlags(totalFlags);
+        spawnFlags(totalFlagsToSpawn);
 
-        // Rotation and Elimination Check
-        let angleCounter = 0;
-        Events.on(engine, 'beforeUpdate', () => {
-            angleCounter += rotationSpeed;
-            
-            // Check flags falling out
-            flagBodies.forEach((flag, index) => {
-                const dist = Math.hypot(flag.position.x - centerX, flag.position.y - centerY);
-                if (dist > circleRadius + 60) {
-                    Composite.remove(engine.world, flag);
-                    flagBodies.splice(index, 1);
-                    
-                    if (flagBodies.length === 1) {
-                        document.getElementById('top-banner').innerText = "Winner: Champion Country! 🏆";
-                        setTimeout(() => {
-                            spawnFlags(totalFlags);
-                            document.getElementById('top-banner').innerText = "Country Flag Battle";
-                        }, 4000);
-                    }
+        // Custom Render Loop for Flag Images & Neon Wall Effect
+        Events.on(render, 'afterRender', () => {
+            const ctx = render.context;
+
+            // Draw Neon Outer Circle
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, circleRadius + 8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#3b82f6';
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw Flag Images on Balls
+            activeFlagBodies.forEach(b => {
+                const pos = b.position;
+                const r = b.radiusVal;
+                const cData = b.countryData;
+                const img = loadedFlagImages[cData.code];
+
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate(b.angle);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.clip();
+
+                if (img && img.complete) {
+                    ctx.drawImage(img, -r, -r, r * 2, r * 2);
+                } else {
+                    ctx.fillStyle = '#ff0055';
+                    ctx.fill();
                 }
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
             });
         });
 
-        function toggleSettings() {
-            const panel = document.getElementById('settings-panel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        // Game Loop Update
+        let lastWinnerName = "";
+        Events.on(engine, 'beforeUpdate', () => {
+            arenaAngle += gapRotationSpeed;
+
+            // Rotate Arena Walls
+            buildArena();
+
+            // Check Flag Eliminations
+            for (let i = activeFlagBodies.length - 1; i >= 0; i--) {
+                const b = activeFlagBodies[i];
+                const dist = Math.hypot(b.position.x - centerX, b.position.y - centerY);
+
+                if (dist > circleRadius + 45) {
+                    // Country Eliminated
+                    const cData = b.countryData;
+                    updateTopFeed(cData);
+
+                    Composite.remove(engine.world, b);
+                    activeFlagBodies.splice(i, 1);
+
+                    // Check Winner
+                    if (activeFlagBodies.length === 1) {
+                        const winner = activeFlagBodies[0].countryData;
+                        lastWinnerName = winner.name;
+                        showWinnerBanner(winner);
+
+                        setTimeout(() => {
+                            spawnFlags(totalFlagsToSpawn);
+                        }, 4000);
+                    }
+                }
+            }
+        });
+
+        // Update Top Live Feed (Typing Animation)
+        function updateTopFeed(country) {
+            const feedFlag = document.getElementById('feed-flag');
+            const feedText = document.getElementById('feed-text');
+
+            feedFlag.innerHTML = `<img src="https://flagcdn.com/w80/${country.code}.png">`;
+            feedText.innerText = `${country.name}`;
         }
 
-        function updateSettings() {
-            rotationSpeed = parseFloat(document.getElementById('speed-select').value);
-            totalFlags = parseInt(document.getElementById('flags-select').value);
-            spawnFlags(totalFlags);
+        function showWinnerBanner(country) {
+            const feedFlag = document.getElementById('feed-flag');
+            const feedText = document.getElementById('feed-text');
+
+            feedFlag.innerHTML = `🏆`;
+            feedText.innerText = `${country.name} WIN!`;
+        }
+
+        // Settings Panel Logic
+        function openSettings() {
+            document.getElementById('settings-modal').style.display = 'block';
+        }
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        // Speed Selector
+        document.querySelectorAll('#speed-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#speed-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gapRotationSpeed = parseFloat(this.getAttribute('data-val'));
+            });
+        });
+
+        // Flag Count Selector
+        document.querySelectorAll('#flag-count-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#flag-count-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const val = parseInt(this.getAttribute('data-val'));
+                document.getElementById('flag-count-input').value = val;
+                totalFlagsToSpawn = val;
+                spawnFlags(totalFlagsToSpawn);
+            });
+        });
+
+        function onCustomFlagCount(val) {
+            totalFlagsToSpawn = parseInt(val) || 20;
+            document.querySelectorAll('#flag-count-group .btn-opt').forEach(b => b.classList.remove('active'));
+            spawnFlags(totalFlagsToSpawn);
+        }
+
+        // Gap Degree Selector
+        document.querySelectorAll('#gap-size-group .btn-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#gap-size-group .btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const val = parseInt(this.getAttribute('data-val'));
+                document.getElementById('gap-degree-input').value = val;
+                gapSizeDegrees = val;
+            });
+        });
+
+        function onCustomGapDegree(val) {
+            gapSizeDegrees = parseInt(val) || 35;
+            document.querySelectorAll('#gap-size-group .btn-opt').forEach(b => b.classList.remove('active'));
+        }
+
+        // Background Color Controls
+        function changeBgColor(color) {
+            document.body.style.backgroundColor = color;
+        }
+        function resetBgColor() {
+            document.body.style.backgroundColor = "#0d1b2a";
+            document.getElementById('bg-color-picker').value = "#0d1b2a";
+        }
+
+        // Logo Upload Controls
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const logoImg = document.getElementById('custom-logo');
+                    logoImg.src = evt.target.result;
+                    logoImg.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        function removeLogo() {
+            const logoImg = document.getElementById('custom-logo');
+            logoImg.src = "";
+            logoImg.style.display = 'none';
+            document.getElementById('logo-input').value = "";
         }
     </script>
 </body>
