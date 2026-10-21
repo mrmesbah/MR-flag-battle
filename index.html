@@ -26,38 +26,40 @@
             transition: background-color 0.3s;
         }
 
-        /* Compact Top Banner for Shorts */
+        /* YouTube Shorts Compact Top Banner */
         #top-feed {
             position: absolute;
-            top: 15px;
-            font-size: 20px;
+            top: 25px;
+            font-size: 18px;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
             background: rgba(13, 27, 42, 0.9);
-            padding: 6px 20px;
+            padding: 6px 18px;
             border-radius: 25px;
             border: 2px solid #00f3ff;
             box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
             z-index: 10;
         }
         #top-feed img {
-            width: 28px;
-            height: 18px;
+            width: 26px;
+            height: 16px;
             border-radius: 3px;
             object-fit: cover;
         }
 
-        /* Compact Circle Container for Shorts */
+        /* YouTube Shorts Vertical Layout (9:16 Aspect Ratio Container) */
         #game-container {
             position: relative;
-            width: 480px;
-            height: 480px;
+            width: 400px;
+            height: 710px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         canvas {
             display: block;
-            border-radius: 50%;
         }
 
         #custom-logo {
@@ -65,8 +67,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
+            width: 180px;
+            height: 180px;
             object-fit: contain;
             pointer-events: none;
             opacity: 0.5;
@@ -343,14 +345,14 @@
         const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
         const container = document.getElementById('game-container');
-        const width = 480;
-        const height = 480;
+        const width = 400;
+        const height = 710; // YouTube Shorts 9:16 Aspect Ratio Resolution
         const centerX = width / 2;
         const centerY = height / 2;
-        const circleRadius = 200; // Adjusted for compact shorts size
+        const circleRadius = 175; // Perfect fit for vertical shorts
 
         const engine = Engine.create();
-        engine.world.gravity.y = 0.15; // LOW GRAVITY -> Floating Bubble Effect!
+        engine.world.gravity.y = 0.05; // Extremely low gravity so flags float and agitate like bubbles!
 
         const render = Render.create({
             element: container,
@@ -381,7 +383,7 @@
             boundarySegments.forEach(b => Composite.remove(engine.world, b));
             boundarySegments = [];
 
-            const totalSegs = 80;
+            const totalSegs = 72;
             const anglePerSeg = (Math.PI * 2) / totalSegs;
             const gapRad = (gapSizeDegrees * Math.PI) / 180;
             const halfGap = gapRad / 2;
@@ -428,25 +430,25 @@
 
             for (let i = 0; i < uniqueList.length; i++) {
                 const country = uniqueList[i];
-                const offsetX = centerX + (Math.random() - 0.5) * 80;
-                const offsetY = centerY + (Math.random() - 0.5) * 80;
+                const offsetX = centerX + (Math.random() - 0.5) * 60;
+                const offsetY = centerY + (Math.random() - 0.5) * 60;
 
-                const ballRadius = count > 100 ? 10 : (count > 50 ? 12 : 15);
+                const ballRadius = count > 100 ? 9 : (count > 50 ? 11 : 14);
 
                 const body = Bodies.circle(offsetX, offsetY, ballRadius, {
-                    restitution: 0.98, // High Bouncy Bubble Collisions
+                    restitution: 1.0, // Maximum Bounciness for continuous bubble collisions
                     friction: 0.0,
-                    frictionAir: 0.002, // Floating resistance
+                    frictionAir: 0.001,
                     density: 0.001,
                     countryData: country,
                     radiusVal: ballRadius,
                     render: { fillStyle: '#ffffff' }
                 });
 
-                // Continuous random float force for bubble agitation
+                // Give strong continuous velocity so they never settle down at the bottom
                 Body.setVelocity(body, {
-                    x: (Math.random() - 0.5) * 8,
-                    y: (Math.random() - 0.5) * 8
+                    x: (Math.random() - 0.5) * 12,
+                    y: (Math.random() - 0.5) * 12
                 });
 
                 activeFlagBodies.push(body);
@@ -456,7 +458,7 @@
 
         spawnFlags(totalFlagsToSpawn);
 
-        // Custom Render Loop for Rotating Neon Ring & Floating Bubbles
+        // Custom Render Loop for Rotating Neon Ring & Floating Bubble Flags
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
 
@@ -472,14 +474,14 @@
             ctx.beginPath();
             ctx.arc(0, 0, circleRadius, startAngle, endAngle);
             ctx.strokeStyle = '#00f3ff';
-            ctx.lineWidth = 7;
+            ctx.lineWidth = 6;
             ctx.lineCap = 'round';
             ctx.shadowColor = '#00f3ff';
             ctx.shadowBlur = 25;
             ctx.stroke();
             ctx.restore();
 
-            // Draw Flags as Floating Bubbles
+            // Draw Flag Bubbles
             activeFlagBodies.forEach(b => {
                 const pos = b.position;
                 const r = b.radiusVal;
@@ -514,11 +516,11 @@
             arenaAngle += gapRotationSpeed;
             buildArena();
 
-            // Apply slight random floating impulses to simulate bubble agitation
+            // Constant agitation force to keep flags floating like active bubbles
             activeFlagBodies.forEach(b => {
                 Body.applyForce(b, b.position, {
-                    x: (Math.random() - 0.5) * 0.0004,
-                    y: (Math.random() - 0.5) * 0.0004
+                    x: (Math.random() - 0.5) * 0.0008,
+                    y: (Math.random() - 0.5) * 0.0008
                 });
             });
 
@@ -539,7 +541,7 @@
                         showWinnerBanner(winner);
                         speakWinner(winner.name);
 
-                        // AUTO-LOOP: Restart next round automatically after 4.5 seconds
+                        // Auto-Loop to Next Round
                         setTimeout(() => {
                             spawnFlags(totalFlagsToSpawn);
                         }, 4500);
