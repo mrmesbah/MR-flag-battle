@@ -815,3 +815,10 @@
     </script>
 </body>
 </html>
+// Prevent Game Pause on Tab Switch / Background
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+        // Force the engine/animation to keep running even in background
+        isPlaying = true; 
+    }
+});
